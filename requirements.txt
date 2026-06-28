@@ -1,0 +1,6 @@
+# Python dependencies for the notebooks/scripts.
+# Spark, Delta, and the Foundation Model API endpoints are provided by the Databricks runtime.
+pypdf
+regex
+mlflow
+databricks-vectorsearch
