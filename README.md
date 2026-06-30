@@ -9,7 +9,6 @@
 
 A financial compliance agent built natively on Databricks that detects transaction violations and explains them against regulatory policy documents — combining SQL-based transaction monitoring with Retrieval-Augmented Generation (RAG) over compliance policy text.
 
-> Built as a live demo for the [Toronto Data Professionals Databricks Meetup](https://www.meetup.com/) — July 15, 2026.
 
 ---
 
@@ -97,22 +96,33 @@ User Query
 ## Project Structure
 
 ```
-compliance-agent/
+aml-compliance-agent/
 │
-├── notebooks/
-│   ├── 01_rag_pipeline.ipynb        # PDF ingestion, chunking, embeddings, retrieval
-│   ├── 02_synthetic_data.ipynb      # Delta Lake table creation with planted violations
-│   ├── 03_sql_agent.ipynb           # SQL violation detection queries
-│   └── 04_compliance_agent.ipynb    # Full agent wiring and demo
+├── notebooks/                       # Databricks source-format notebooks (.py)
+│   ├── 01_rag_pipeline.py           # PDF ingestion, chunking, embeddings, retrieval
+│   ├── 02_synthetic_data.py         # Delta Lake table creation with planted violations
+│   ├── 03_sql_agent.py              # SQL violation detection queries
+│   └── 04_compliance_agent.py       # Full agent wiring and demo (%run 01 + 03)
 │
 ├── data/
+│   ├── README.md                    # Where to place the policy PDF
 │   └── NorthStar_Compliance_Policy_Manual.pdf   # Synthetic policy document
 │
 ├── scripts/
-│   └── northstar_synthetic_data.py  # Standalone data generation script
+│   └── northstar_synthetic_data.py  # Standalone, job-runnable data generation script
 │
+├── requirements.txt                 # Python dependencies
 └── README.md
 ```
+
+> Notebooks are stored in Databricks **source format** (`.py` with `# COMMAND ----------`
+> cell markers) for clean git diffs. Import them into a Databricks workspace as notebooks,
+> or open them directly with Databricks Repos / the VS Code extension.
+
+### Run order
+
+1. `notebooks/02_synthetic_data.py` — build the `northstar.compliance` Delta tables
+2. `notebooks/04_compliance_agent.py` — runs `01_rag_pipeline` and `03_sql_agent` via `%run`, then the demo
 
 ---
 
