@@ -9,7 +9,6 @@
 
 A financial compliance agent built natively on Databricks that detects transaction violations and explains them against regulatory policy documents — combining SQL-based transaction monitoring with Retrieval-Augmented Generation (RAG) over compliance policy text.
 
-> Built as a live demo for the [Toronto Data Professionals Databricks Meetup](https://www.meetup.com/) — July 15, 2026.
 
 ---
 
