@@ -102,7 +102,8 @@ aml-compliance-agent/
 │   ├── 01_rag_pipeline.py           # PDF ingestion, chunking, embeddings, retrieval
 │   ├── 02_synthetic_data.py         # Delta Lake table creation with planted violations
 │   ├── 03_sql_agent.py              # SQL violation detection queries
-│   └── 04_compliance_agent.py       # Full agent wiring and demo (%run 01 + 03)
+│   ├── 04_compliance_agent.py       # Full agent wiring and demo (%run 01 + 03)
+│   └── 05_text_to_sql_agent.py      # Natural-language → SQL over the compliance tables
 │
 ├── data/
 │   ├── README.md                    # Where to place the policy PDF
@@ -228,6 +229,29 @@ def generate(query, retrieved_chunks):
 
 ---
 
+## Text-to-SQL Agent
+
+`05_text_to_sql_agent.py` lets an analyst ask ad-hoc questions in natural language instead of relying on the hardcoded queries in notebook 03.
+
+```
+Question ──▶ schema context ──▶ LLM ──▶ SQL ──▶ safety guard ──▶ spark.sql ──▶ LLM ──▶ answer
+             (information_schema)                 (SELECT-only)                   (explain)
+```
+
+1. **Schema introspection** — columns and types are pulled live from Unity Catalog `information_schema`, plus a few categorical value hints (e.g. `'Cash Deposit'`, `'High'`) so the model uses exact strings.
+2. **Generation** — Llama 3.3 70B turns the question + schema into a single SQL statement.
+3. **Safety guard** — `is_safe_select()` is the hard gate: only a single `SELECT`/`WITH` statement reaches Spark. Any DML/DDL keyword or stacked statement is rejected before execution — the LLM's instructions are never trusted on their own.
+4. **Answer** — results are fed back to the model for a concise natural-language response. The generated SQL is always returned so the analyst can audit it.
+
+```python
+result = answer_question("Which high-risk customers made more than one cash deposit in June 2024?")
+result["sql"]        # the generated (audited) query
+result["dataframe"]  # the Spark DataFrame of results
+result["answer"]     # the natural-language explanation
+```
+
+---
+
 ## Synthetic Data
 
 All data is fully synthetic. Three violations are planted in 10,000 transactions across 100 customers.
@@ -292,7 +316,7 @@ WHERE t.transaction_type = 'Wire Transfer'
 ## Limitations & Future Work
 
 - **In-memory vector store** — rebuilt on every cluster restart; production version would use Databricks Vector Search
-- **Hardcoded detection queries** — next step is Text-to-SQL so analysts can ask ad-hoc questions in natural language
+- **Text-to-SQL** — `05_text_to_sql_agent.py` lets analysts ask ad-hoc questions in natural language; a future step is validating generated SQL against a query allow-list beyond the current read-only guard
 - **3 violation types** — extensible to hundreds of rules via a proper TMS (Transaction Monitoring System) integration
 - **No authentication layer** — production deployment would use Databricks Apps with workspace SSO
 
