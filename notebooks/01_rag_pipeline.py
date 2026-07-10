@@ -9,12 +9,21 @@
 
 # COMMAND ----------
 
-# MAGIC %pip install pypdf
+# MAGIC %pip install pypdf "typing_extensions>=4.12.0"
 
 # COMMAND ----------
 
-import regex as re
+# Restart Python so the freshly installed libraries load cleanly. This wipes the session,
+# so every import must come in the cells *after* this call.
+dbutils.library.restartPython()
+
+# COMMAND ----------
+
+import re
 from pypdf import PdfReader
+
+# COMMAND ----------
+
 import mlflow.deployments
 
 # COMMAND ----------
