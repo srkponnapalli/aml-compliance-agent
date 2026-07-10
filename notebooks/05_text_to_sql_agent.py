@@ -186,18 +186,15 @@ def answer_question(question, max_rows=50, verbose=True):
 
 # MAGIC %md
 # MAGIC ## Demo
+# MAGIC
+# MAGIC Skipped when this notebook is pulled in via `%run` (i.e. `RUNNING_AS_MODULE` is set).
 
 # COMMAND ----------
 
-_ = answer_question("Which high-risk customers made more than one cash deposit in June 2024?")
-
-# COMMAND ----------
-
-_ = answer_question("What is the total dollar value of wire transfers to sanctioned countries, broken down by country?")
-
-# COMMAND ----------
-
-_ = answer_question("Who are the top 5 customers by total transaction amount, and what are their risk ratings?")
+if not globals().get("RUNNING_AS_MODULE", False):
+    _ = answer_question("Which high-risk customers made more than one cash deposit in June 2024?")
+    _ = answer_question("What is the total dollar value of wire transfers to sanctioned countries, broken down by country?")
+    _ = answer_question("Who are the top 5 customers by total transaction amount, and what are their risk ratings?")
 
 # COMMAND ----------
 
@@ -208,6 +205,7 @@ _ = answer_question("Who are the top 5 customers by total transaction amount, an
 
 # COMMAND ----------
 
-print(is_safe_select("SELECT * FROM northstar.compliance.customers"))
-print(is_safe_select("DROP TABLE northstar.compliance.customers"))
-print(is_safe_select("SELECT 1; DELETE FROM northstar.compliance.customers"))
+if not globals().get("RUNNING_AS_MODULE", False):
+    print(is_safe_select("SELECT * FROM northstar.compliance.customers"))
+    print(is_safe_select("DROP TABLE northstar.compliance.customers"))
+    print(is_safe_select("SELECT 1; DELETE FROM northstar.compliance.customers"))

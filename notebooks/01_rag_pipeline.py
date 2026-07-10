@@ -170,10 +170,13 @@ def generate(query, retrieved_chunks):
 
 # MAGIC %md
 # MAGIC ## 8. Smoke test
+# MAGIC
+# MAGIC Skipped when this notebook is pulled in via `%run` (i.e. `RUNNING_AS_MODULE` is set).
 
 # COMMAND ----------
 
-query = "What is the threshold for filing a Currency Transaction Report?"
-chunks_retrieved = retrieve(query, documents, top_k=3)
-answer = generate(query, chunks_retrieved)
-print(answer["choices"][0]["message"]["content"])
+if not globals().get("RUNNING_AS_MODULE", False):
+    query = "What is the threshold for filing a Currency Transaction Report?"
+    chunks_retrieved = retrieve(query, documents, top_k=3)
+    answer = generate(query, chunks_retrieved)
+    print(answer["choices"][0]["message"]["content"])
