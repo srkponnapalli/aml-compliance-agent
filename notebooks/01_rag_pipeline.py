@@ -15,7 +15,12 @@
 
 # Restart Python so the freshly installed libraries load cleanly. This wipes the session,
 # so every import must come in the cells *after* this call.
-dbutils.library.restartPython()
+#
+# Guarded: only restart when this notebook is run standalone. When it's pulled in via `%run`
+# from a parent (e.g. notebook 04 or the Gradio app), the parent has already installed +
+# restarted, and restarting here would wipe the parent's session mid-run.
+if not globals().get("RUNNING_AS_MODULE", False):
+    dbutils.library.restartPython()
 
 # COMMAND ----------
 
