@@ -132,39 +132,79 @@ def agent(query):
 import gradio as gr
 
 TOOL_LABELS = {
-    "violation_sweep": "🔍 Violation Sweep (fixed AML checks + policy)",
-    "text_to_sql": "🧮 Text-to-SQL (ad-hoc query)",
-    "policy_lookup": "📖 Policy Lookup (RAG over the policy manual)",
+    "violation_sweep": "🔍 Violation Sweep",
+    "text_to_sql": "🧮 Text-to-SQL",
+    "policy_lookup": "📖 Policy Lookup",
 }
 
-EXAMPLES = [
+# What each route did — this is what makes "fixed vs generated-on-the-fly" explicit.
+ROUTE_DETAIL = {
+    "violation_sweep": "Ran the **fixed, pre-written** detection queries (CTR / structuring / OFAC) "
+                       "and attached the matching policy clause via RAG.",
+    "text_to_sql": "Wrote a **custom SQL query on the fly** from your question (shown below).",
+    "policy_lookup": "Answered from the **policy manual via RAG** — no database query.",
+}
+
+# Examples grouped by which tool they exercise, so the routing is obvious in the demo.
+FIXED_EXAMPLES = [
     "Are there any compliance violations in our recent transactions?",
-    "How many wire transfers were sent to each destination country?",
-    "What is the threshold for filing a Currency Transaction Report?",
+    "Show me any structuring activity.",
+]
+SQL_EXAMPLES = [
+    "What's the average deposit amount for high-risk customers versus low-risk customers?",
+    "How many wire transfers went to each country, and which of those countries are sanctioned?",
+    "Who are the top 5 customers by total transaction amount?",
+    "Which customers made transactions in more than three different channels?",
+]
+POLICY_EXAMPLES = [
+    "How long do we have to file a Currency Transaction Report?",
+    "When is a Suspicious Activity Report required?",
 ]
 
 
 def respond(question):
     if not question or not question.strip():
-        return "", "Please enter a question."
-    tool, answer = agent(question)
-    return TOOL_LABELS.get(tool, tool), answer
+        return "", "", "Please enter a question."
+
+    tool = route_tool(question)
+    generated_sql = ""
+    if tool == "text_to_sql":
+        result = answer_question(question, verbose=False)
+        answer = result["answer"] or f"Could not answer: {result['error']}"
+        generated_sql = result["sql"] or ""
+    else:
+        answer = TOOLS[tool](question)
+
+    detail = ROUTE_DETAIL.get(tool, "")
+    if generated_sql:
+        detail += f"\n\n**Generated SQL:**\n```sql\n{generated_sql}\n```"
+    return TOOL_LABELS.get(tool, tool), detail, answer
 
 
 with gr.Blocks(title="NorthStar Compliance Agent") as demo:
     gr.Markdown(
         "# NorthStar Compliance Agent\n"
-        "Ask about transactions or policy. The agent **routes** your question to the right tool "
-        "and shows you which one it picked."
+        "Ask a question. The agent **routes** it to one of three tools — watch which one it picks:\n"
+        "- 🔍 **Violation Sweep** — *fixed* AML checks (CTR / structuring / OFAC) + policy\n"
+        "- 🧮 **Text-to-SQL** — writes a *custom query* for ad-hoc questions\n"
+        "- 📖 **Policy Lookup** — answers rules/thresholds from the policy manual (RAG)"
     )
     question = gr.Textbox(label="Question", placeholder="e.g. Are there any compliance violations?", lines=2)
     ask = gr.Button("Ask", variant="primary")
-    tool_used = gr.Textbox(label="Tool selected by the router", interactive=False)
-    answer = gr.Markdown(label="Answer")
+    tool_used = gr.Textbox(label="Router chose", interactive=False)
+    detail = gr.Markdown()
+    answer = gr.Markdown()
 
-    ask.click(respond, inputs=question, outputs=[tool_used, answer])
-    question.submit(respond, inputs=question, outputs=[tool_used, answer])
-    gr.Examples(EXAMPLES, inputs=question)
+    ask.click(respond, inputs=question, outputs=[tool_used, detail, answer])
+    question.submit(respond, inputs=question, outputs=[tool_used, detail, answer])
+
+    gr.Markdown("### Try these — notice how the router sends each group to a different tool")
+    gr.Markdown("**Fixed AML sweep** — pre-written checks")
+    gr.Examples(FIXED_EXAMPLES, inputs=question, label="Fixed sweep")
+    gr.Markdown("**Ad-hoc questions** — SQL generated live")
+    gr.Examples(SQL_EXAMPLES, inputs=question, label="Ad-hoc / Text-to-SQL")
+    gr.Markdown("**Policy questions** — RAG over the manual")
+    gr.Examples(POLICY_EXAMPLES, inputs=question, label="Policy")
 
 # COMMAND ----------
 
