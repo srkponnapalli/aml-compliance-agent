@@ -61,10 +61,13 @@ def detect_violations():
 
 # MAGIC %md
 # MAGIC ## Smoke test
+# MAGIC
+# MAGIC Skipped when this notebook is pulled in via `%run` (i.e. `RUNNING_AS_MODULE` is set).
 
 # COMMAND ----------
 
-violations = detect_violations()
-for violation_type, data in violations.items():
-    print(f"\n── {violation_type.upper()} ──")
-    print(data)
+if not globals().get("RUNNING_AS_MODULE", False):
+    violations = detect_violations()
+    for violation_type, data in violations.items():
+        print(f"\n── {violation_type.upper()} ──")
+        print(data)

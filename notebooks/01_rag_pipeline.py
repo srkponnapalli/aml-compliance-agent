@@ -9,12 +9,26 @@
 
 # COMMAND ----------
 
-# MAGIC %pip install pypdf
+# MAGIC %pip install pypdf "typing_extensions>=4.12.0"
 
 # COMMAND ----------
 
-import regex as re
+# Restart Python so the freshly installed libraries load cleanly. This wipes the session,
+# so every import must come in the cells *after* this call.
+#
+# Guarded: only restart when this notebook is run standalone. When it's pulled in via `%run`
+# from a parent (e.g. notebook 04 or the Gradio app), the parent has already installed +
+# restarted, and restarting here would wipe the parent's session mid-run.
+if not globals().get("RUNNING_AS_MODULE", False):
+    dbutils.library.restartPython()
+
+# COMMAND ----------
+
+import re
 from pypdf import PdfReader
+
+# COMMAND ----------
+
 import mlflow.deployments
 
 # COMMAND ----------
@@ -170,10 +184,13 @@ def generate(query, retrieved_chunks):
 
 # MAGIC %md
 # MAGIC ## 8. Smoke test
+# MAGIC
+# MAGIC Skipped when this notebook is pulled in via `%run` (i.e. `RUNNING_AS_MODULE` is set).
 
 # COMMAND ----------
 
-query = "What is the threshold for filing a Currency Transaction Report?"
-chunks_retrieved = retrieve(query, documents, top_k=3)
-answer = generate(query, chunks_retrieved)
-print(answer["choices"][0]["message"]["content"])
+if not globals().get("RUNNING_AS_MODULE", False):
+    query = "What is the threshold for filing a Currency Transaction Report?"
+    chunks_retrieved = retrieve(query, documents, top_k=3)
+    answer = generate(query, chunks_retrieved)
+    print(answer["choices"][0]["message"]["content"])
